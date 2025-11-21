@@ -1,0 +1,53 @@
+---
+title: "Mapping Sampling Locations"
+editor: visual
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+## 9. Mapping Sampling Locations
+
+::: callout-note
+### Exercises for Section 9. Mapping Sampling Locations
+
+-   Plot where all the samples are collected from?
+-   Can you change the shape of SEA samples vs AFR samples?
+:::
+
+```{r map-sampling}
+# Ensure country is a proper factor with no empty strings
+meta$country[meta$country == "" | is.na(meta$country)] <- "Unknown"
+
+# Remove any samples missing coordinates
+meta <- meta %>% filter(!is.na(latitude), !is.na(longitude))
+
+meta_sf <- st_as_sf(meta,
+                    coords = c("longitude", "latitude"),
+                    crs = 4326,
+                    remove = FALSE)   # keep original columns
+
+
+# Load world map
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+map <- ggplot() +
+  geom_sf(data = world, fill = "grey90", color = "grey60", linewidth = 0.2) +
+  geom_sf(data = meta_sf,
+          aes(color = country),
+          size = 2, alpha = 0.8) +
+  coord_sf(xlim = c(-20, 120), ylim = c(-25, 25), expand = FALSE) +
+  scale_color_viridis_d() +
+  theme_minimal() +
+  labs(title = "Sampling Locations of P. falciparum Isolates",
+       x = "Longitude", y = "Latitude")
+
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+map
+:::

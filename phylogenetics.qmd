@@ -1,0 +1,116 @@
+---
+title: "Phylogenetic tree"
+editor: visual
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+## 5. Phylogenetic Tree (Neighbor-Joining)
+
+### Exercises for Section 5. Phylogenetic Tree (Neighbor-Joining)
+
+-   What patterns do you observe in this section?
+-   Which samples or populations stand out?
+-   What does this tell you about the population structure?
+-   Why do we use phylogenetic trees plots?
+
+Other tasks: - Use ggplot2 (<https://ggplot2.tidyverse.org/)> to change colours or change the shapes of the countries. - What happens if you change the data to sites?
+
+Ensure you generate trees for both SEA and ARF datasets!
+
+### Phylogenetic Tree (Neighbor-Joining)
+
+```{r nj-tree}
+tree <- nj(dist_mat_SEA)
+
+tree_plot_SEA <- ggtree(tree, layout = "fan") %<+% meta_ord +
+  geom_tippoint(aes(color = country), size = 2) +
+  scale_color_viridis_d() +
+  theme_tree2() +
+  labs(title = "Neighbor-Joining Tree of P. falciparum Samples")
+
+
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+tree_plot_SEA
+:::
+
+### **Tree Purpose**
+
+-   Reconstruct relationships between samples.
+
+-   Show how lineages evolved over time.
+
+-   Help identify transmission clusters, founder haplotypes, and ancestral relationships.
+
+### **What a Tree Shows**
+
+-   Reconstructs evolutionary relationships between samples.
+
+-   Branch lengths reflect genetic distance or divergence.
+
+-   Clades represent groups with shared ancestry.
+
+### **Why It’s Useful for This Workshop**
+
+-   Can identify a single outbreak clade in Namibia.
+
+-   Confirms where the outbreak samples descend from.
+
+-   Highlights differences between:
+
+    -   outbreak lineage
+
+    -   local African diversity
+
+    -   SEA background structure
+
+### **Strengths**
+
+-   High interpretability: evolutionary history shown as branching patterns.
+
+-   Excellent for identifying clonal expansions, outbreak clusters, and transmissions.
+
+-   Works even with small numbers of SNPs (e.g. barcodes).
+
+### **Weaknesses**
+
+-   Distance-based trees (e.g., NJ) do not model evolution explicitly.
+
+-   Low SNP counts can produce low-resolution or uncertain topologies.
+
+-   Recombination in malaria violates tree assumptions - networks or clustering methods may be more accurate.
+
+-   Trees can mislead if there is strong admixture or reticulation.
+
+# Quiz time
+
+::: callout-note
+**When would you use a pcoa plot and a tree in the following scenarios?**
+
+1.  Explore broad population structure
+2.  Identify outbreak clusters
+3.  Examine evolutionary relationships
+4.  Identify drug resistant mutations
+5.  Detect admixture or complex ancestry
+6.  First-pass QC / exploratory analysis
+:::
+
+::: {.callout-tip collapse="true"}
+## Solution
+
+| Purpose | Best Method | Why |
+|----|----|----|
+| Explore broad population structure | PCoA | Fast, intuitive, clustering-focused |
+| Identify outbreak clusters | PCoA and Trees | PCoA visualises clusters, tree shows lineage |
+| Examine evolutionary relationships | Tree | Reflects ancestral history |
+| Detect admixture or complex ancestry | PCoA (or DAPC) | Trees can be misleading with recombination |
+| First-pass QC / exploratory analysis | PCoA | Quick sanity check |
+| Identify drug resistant mutations | Neither | These plots will not help us in identifying new or emerging mutations. You can however, colours the plots based on this metadata information. |
+:::

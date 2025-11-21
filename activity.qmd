@@ -1,0 +1,79 @@
+---
+title: "Activity"
+editor: visual
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+## Activity: Merge the datasets together and plot the PCoA and phylogenetic trees
+
+::: callout-note
+-   What do these plots tell us about imported cases?
+-   Do you have an idea on where the parasites have come from?
+:::
+
+```{r merge_dataframes}
+
+stopifnot(all(vcf_filt_SEA@fix[, "ID"] == vcf_filt_AFR@fix[, "ID"]))
+
+vcf_filt_merged <- vcf_filt_SEA
+vcf_filt_merged@gt <- cbind(
+  vcf_filt_SEA@gt,
+  vcf_filt_AFR@gt[, -1, drop = FALSE]  # drop AFR "FORMAT" column
+)
+
+```
+
+```{r genlight-conversion_merged}
+gl_all <- vcfR2genlight(vcf_filt_merged)
+
+# Make sure the order of samples in meta matches genlight individuals
+meta_ord <- meta[match(indNames(gl_all), meta$sample), ]
+stopifnot(all(meta_ord$sample == indNames(gl_all)))
+
+# Assign populations by country
+pop(gl_all) <- meta_ord$country
+
+gl_all
+```
+
+```{r pcoa_merged}
+dist_mat_all <- dist(as.matrix(gl_all))
+pcoa_res <- cmdscale(dist_mat_all, k = 2)
+pcoa_df <- data.frame(pcoa_res, country = pop(gl_all))
+
+pcoa_all <- ggplot(pcoa_df, aes(X1, X2, color = country)) +
+  geom_point(size = 3) +
+  theme_minimal() +
+  scale_color_viridis_d() +
+  labs(title = "PCoA of 180-SNP Genotypes", x = "Coordinate 1", y = "Coordinate 2")
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+pcoa_all
+:::
+
+```{r nj-tree}
+tree <- nj(dist_mat_all)
+
+tree_all <- ggtree(tree, layout = "fan") %<+% meta_ord +
+  geom_tippoint(aes(color = country), size = 2) +
+  scale_color_viridis_d() +
+  theme_tree2() +
+  labs(title = "Neighbor-Joining Tree of *P. falciparum* Samples")
+
+tree_plot
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+tree_all
+:::
+
+# Break: We will wait until everyone has completed this activity.

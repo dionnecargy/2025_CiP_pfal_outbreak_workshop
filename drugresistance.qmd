@@ -1,0 +1,112 @@
+---
+title: "Drug Resistance"
+editor: visual
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+## 10. Drug-Resistance Mutation Exploration
+
+::: callout-note
+### Exercises for Section 10. Drug-Resistance Mutation Exploration
+
+-   What does this plot tell us?
+-   Do any of the samples have any other mutations? How can you tell?
+:::
+
+### 10.1. C580Y prevalence by country
+
+```{r dr-c580y-by-country}
+dr_c580 <- meta %>%
+  group_by(country, kelch13_C580Y) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(country) %>%
+  mutate(freq = n / sum(n))
+
+prev_plot <- ggplot(dr_c580, aes(x = country, y = freq, fill = kelch13_C580Y)) +
+  geom_col(position = "stack") +
+  scale_fill_manual(values = c("WT" = "grey80", "Y" = "firebrick")) +
+  theme_minimal() +
+  coord_flip() +
+  labs(title = "C580Y Prevalence by Country",
+       x = "Country", y = "Proportion",
+       fill = "kelch13 C580Y")
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+prev_plot
+:::
+
+### 10.2. Drug resistance mutation heatmap by country
+
+```{r dr-heatmap}
+dr_cols <- c("kelch13_C580Y",
+             "crt_N75E","crt_K76T","crt_I356T",
+             "mdr1_N86Y","mdr1_Y184F",
+             "dhfr_N51I","dhfr_C59R","dhfr_S108N",
+             "dhps_A437G","dhps_K540E")
+
+dr_long <- meta %>%
+  select(country, all_of(dr_cols)) %>%
+  pivot_longer(cols = all_of(dr_cols), names_to = "marker", values_to = "aa") %>%
+  group_by(country, marker) %>%
+  summarise(prop_mut = mean(aa != "WT"), .groups = "drop")
+
+heatmap <- ggplot(dr_long, aes(x = marker, y = country, fill = prop_mut)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c(labels = percent_format(accuracy = 1)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Proportion of Mutant DR Alleles by Country",
+       x = "Drug-Resistance Marker", y = "Country",
+       fill = "Mutant
+proportion")
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+heatmap
+:::
+
+### 10.3. Map coloured by C580Y status
+
+-   What does this tell us about the imported cases?
+-   You may need to change the size of the plot, points etc. to see the full picture.
+
+```{r dr-map-c580y}
+meta$C580Y_status <- ifelse(meta$kelch13_C580Y == "Y", "C580Y mutant", "WT")
+
+C580Yplot <- ggplot() +
+  geom_sf(data = world, fill = "grey95", color = "grey80") +
+  geom_point(data = meta,
+             aes(x = longitude, y = latitude, color = C580Y_status),
+             size = 2, alpha = 0.9) +
+  coord_sf(xlim = c(-20, 120), ylim = c(-25, 25), expand = FALSE) +
+  scale_color_manual(values = c("WT" = "grey40", "C580Y mutant" = "firebrick")) +
+  theme_minimal() +
+  labs(title = "Geographic Distribution of kelch13 C580Y",
+       x = "Longitude", y = "Latitude",
+       color = "C580Y status")
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+C580Yplot
+:::
+
+::: callout-important
+Can you find out information about any other important drug resistance genes?
+
+1.  Kelch13
+2.  mdr1
+3.  dhfr
+4.  dhps
+5.  crt
+:::

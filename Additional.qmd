@@ -1,0 +1,286 @@
+---
+title: "Additional"
+editor: visual
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+## 11. Connectedness Maps (grcMalaria-style)
+
+::: callout-note
+### Exercises for 11. Connectedness Maps (based on grcMalaria - <https://genremekong.org/tools/grcmalaria-guide>)
+
+-   What is this figure telling us?
+:::
+
+::: callout-warning
+## Warning
+
+You may need to zoom into this figure to see the connections.
+:::
+
+Here we define a reusable function to map genetic connectedness between **sites or** countries\*\* using the PCoA distance matrix.
+
+```{r map-connectedness-func}
+map_connectedness <- function(meta, dist_mat, group_var = c("site", "country"),
+                              measure = c("similarity", "meanDistance"),
+                              thresholds = c(0.9, 0.8, 0.7),
+                              min_pairs = 10,
+                              xlim = c(-20, 120),
+                              ylim = c(-25, 25)) {
+
+  group_var <- match.arg(group_var)
+  measure <- match.arg(measure)
+
+  # Ensure order matches distance matrix labels
+  samples <- labels(dist_mat)
+  meta_ord <- meta[match(samples, meta$sample), ]
+  stopifnot(all(meta_ord$sample == samples))
+
+  D <- as.matrix(dist_mat)
+  max_d <- max(D)
+  S <- 1 - D / max_d  # rescaled similarity 0–1
+
+  grp <- meta_ord[[group_var]]
+
+  # Coordinates per group (centroids)
+  centers <- meta_ord %>%
+    group_by(.data[[group_var]]) %>%
+    summarise(lon = mean(longitude),
+              lat = mean(latitude),
+              .groups = "drop")
+
+  grp_levels <- centers[[group_var]]
+
+  edges <- list()
+
+  for (i in seq_along(grp_levels)) {
+    for (j in seq_along(grp_levels)) {
+      if (j <= i) next
+      g1 <- grp_levels[i]
+      g2 <- grp_levels[j]
+
+      idx1 <- which(grp == g1)
+      idx2 <- which(grp == g2)
+      if (length(idx1) == 0 || length(idx2) == 0) next
+
+      # all pairwise combinations between groups
+      pairs <- expand.grid(i = idx1, j = idx2)
+      if (nrow(pairs) < min_pairs) next
+
+      d_vals <- D[cbind(pairs$i, pairs$j)]
+      s_vals <- S[cbind(pairs$i, pairs$j)]
+
+      for (thr in thresholds) {
+        if (measure == "similarity") {
+          prop <- mean(s_vals >= thr)
+        } else { # meanDistance-style: high similarity ~ low distance
+          # interpret threshold as similarity, convert to distance cutoff
+          d_cutoff <- (1 - thr) * max_d
+          prop <- mean(d_vals <= d_cutoff)
+        }
+        if (prop > 0) {
+          edges[[length(edges) + 1]] <- data.frame(
+            g1 = g1, g2 = g2,
+            lon1 = centers$lon[centers[[group_var]] == g1],
+            lat1 = centers$lat[centers[[group_var]] == g1],
+            lon2 = centers$lon[centers[[group_var]] == g2],
+            lat2 = centers$lat[centers[[group_var]] == g2],
+            prop = prop,
+            threshold = thr,
+            stringsAsFactors = FALSE
+          )
+        }
+      }
+    }
+  }
+
+  if (length(edges) == 0) {
+    message("No edges above thresholds.")
+    return(NULL)
+  }
+
+  edges_df <- do.call(rbind, edges)
+  edges_df$threshold_lab <- paste0("Threshold = ", edges_df$threshold)
+
+  world <- ne_countries(scale = "medium", returnclass = "sf")
+
+  p <- ggplot() +
+    geom_sf(data = world, fill = "grey95", color = "grey80") +
+    geom_segment(data = edges_df,
+                 aes(x = lon1, y = lat1,
+                     xend = lon2, yend = lat2,
+                     size = prop, color = prop),
+                 alpha = 0.8) +
+    geom_point(data = centers,
+               aes(x = lon, y = lat),
+               size = 2, color = "black") +
+   # geom_label(data = centers,
+  #             aes(x = lon, y = lat, label = .data[[group_var]]),
+  #             size = 3, label.size = 0.1, fill = "white", alpha = 0.8) +
+    coord_sf(xlim = xlim, ylim = ylim, expand = FALSE) +
+    scale_size_continuous(range = c(0.2, 2.5)) +
+    scale_color_viridis_c() +
+    facet_wrap(~ threshold_lab) +
+    theme_minimal() +
+    labs(title = paste("Genetic connectedness by", group_var),
+         x = "Longitude", y = "Latitude",
+         size = "Proportion
+highly similar pairs",
+         color = "Proportion
+highly similar pairs")
+
+  p
+}
+
+```
+
+### 11.1. Connectedness between sites
+
+```{r connectedness-site}
+# Use the same distance matrix from PCoA (dist_mat)
+p_site <- map_connectedness(meta, dist_mat_all,
+                            group_var = "site",
+                            measure = "similarity",
+                            thresholds = c(0.9, 0.8, 0.7),
+                            min_pairs = 10)
+
+
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+p_site
+:::
+
+## 12. Discriminant Analysis of Principal Components (DAPC)
+
+::: callout-note
+### Exercises for Section 12.
+
+-   What patterns do you observe in this section?
+-   Which samples or populations stand out?
+-   What does this tell you about the outbreak or population structure?
+:::
+
+```{r dapc, eval=FALSE}
+# NOTE: find.clusters() is interactive; this chunk is set to eval=FALSE for knitting.
+# You can run it interactively in an R session.
+
+grp <- find.clusters(gl_all, max.n.clust = 10)  # interactive prompt for choosing K
+dapc_res <- dapc(gl_all, grp$grp)
+
+dapc <- dapc(gl_all, n.pca=30, n.da=4)
+
+scatter(dapc, scree.da=FALSE, scree.pca=FALSE,
+cell=1.5, cex=4, solid=0.8, bg="white",cstar=0, clab=0, leg=TRUE)
+
+# density plots
+scatter(dapc,1,1,  bg="white",
+scree.da=FALSE, legend=TRUE, solid=0.9)
+
+# membership probability
+compoplot(dapc, lab="", posi=list(x=100,y=-.03), cleg=.7)
+
+```
+
+## **What is DAPC?**
+
+-   DAPC = Discriminant Analysis of Principal Components, implemented in *adegenet*.
+
+-   It is a multivariate clustering method specifically designed for genetic data.
+
+-   It works in two steps:
+
+    <div>
+
+    1.  PCA step → reduces dimensionality and removes linkage between loci
+    2.  Discriminant Analysis step → maximises separation among predefined groups
+
+    </div>
+
+## **Why you might choose DAPC over PCoA**
+
+### **1. DAPC explicitly maximises between-group differences**
+
+-   PCoA is *unsupervised* → it reduces the entire distance matrix in a neutral way.
+
+-   DAPC is *supervised* → you specify group labels (e.g., country, site, outbreak cluster).
+
+-   This allows DAPC to highlight **the separation you care about**, even if subtle.
+
+### **2. DAPC is more powerful for detecting population structure**
+
+-   DAPC often reveals clusters missed by PCA/PCoA.
+
+-   Particularly useful for:
+
+    -   detecting cryptic population structure
+
+    -   separating closely related subpopulations
+
+    -   identifying outbreak clusters vs. background diversity
+
+### **3. DAPC is not constrained by assumptions of Hardy–Weinberg equilibrium**
+
+-   Many traditional population genetic methods assume HWE.
+
+-   **DAPC does not**, making it suitable for:
+
+    -   mixed infections
+
+    -   clonally expanding outbreaks
+
+    -   organisms with unusual inheritance (e.g., malaria parasites)
+
+### **4. DAPC works well when the goal is *assignment or classification***
+
+-   You can classify individuals into:
+
+    -   countries
+
+    -   sites
+
+    -   haplotypes
+
+    -   outbreak vs. non-outbreak lineages
+
+-   It also provides **posterior membership probabilities**, helpful for detecting:
+
+    -   imports
+
+    -   admixture
+
+    -   migration events
+
+### **5. DAPC allows flexible selection of PCs**
+
+-   You can tune the number of PCs to:
+
+    -   avoid overfitting
+
+    -   ensure robust structure inference
+
+-   Tools like `xvalDapc()` help you identify the optimal number.
+
+## **Weaknesses of DAPC**
+
+-   **Requires predefined groups** — PCoA does not.\
+    (Although `find.clusters()` can infer groups first.)
+
+-   **Can overfit** if too many PCs are retained.
+
+-   **Not a true evolutionary model** — separation is statistical, not phylogenetic.
+
+-   **Less intuitive** for beginners compared with PCA/PCoA.
+
+## When to use PcoA vs DAPC?
+
+PCoA shows the structure that exists naturally; DAPC shows the structure you are specifically looking for.
+
+PCoA asks: “How different are all these samples?”
+DAPC asks: “How different are these groups?”

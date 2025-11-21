@@ -1,0 +1,97 @@
+---
+title: "Missingness and Filtering"
+editor: visual
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+## 2. Filter the Dataset and Calculate Missingness
+
+::: callout-note
+### Exercises for Section 2. Filter the Dataset and Calculate Missingness
+
+-   Which plots are most informative?
+-   Why should filter the data?
+-   Are these mostly complete datasets or are we missing important information?
+:::
+
+### IMPORTANT
+
+You will need to run this section on both SEA and ARF datasets. You can duplicate the code chunk, or add additional lines in the chunk to define the other dataset.
+
+Note: if you use the same dataframe names, you will overwrite your dataframes.
+
+```{r summaries}
+
+summary(SEA)
+```
+
+```{r extract-gt}
+
+gts_SEA <- extract.gt(SEA) # character matrix of genotypes (e.g., 0/0, 1/1, ./.)
+gts_AFR <- extract.gt(AFR) 
+
+```
+
+```{r missingness_plots}
+
+# Missingness: treat "./." as missing
+miss_by_sample_SEA <- apply(is.na(gts_SEA) | gts_SEA == "./.", 2, mean)
+miss_by_variant_SEA <- apply(is.na(gts_SEA) | gts_SEA == "./.", 1, mean)
+miss_by_sample_AFR <- apply(is.na(gts_AFR) | gts_AFR == "./.", 2, mean)
+miss_by_variant_AFR <- apply(is.na(gts_AFR) | gts_AFR == "./.", 1, mean)
+
+
+#plots 
+df_miss_sample <- data.frame(Sample = names(miss_by_sample), MissingRate = miss_by_sample)
+ggplot(df_miss_sample, aes(x = reorder(Sample, MissingRate), y = MissingRate)) +
+  geom_bar(stat = "identity", fill = "darkred") +
+  coord_flip() + theme_minimal() +
+  labs(title = "Missingness per Sample", y = "Proportion Missing", x = "Sample")
+
+df_miss_variant <- data.frame(SNP = 1:length(miss_by_variant), MissingRate = miss_by_variant)
+ggplot(df_miss_variant, aes(x = SNP, y = MissingRate)) +
+  geom_point(color = "steelblue") +
+  theme_minimal() +
+  labs(title = "Missingness per SNP", y = "Proportion Missing", x = "SNP Index")
+
+
+# alternative plots
+snp_samp_missing_plot <- ggplot() +
+  geom_histogram(data=df_miss_sample, aes(x=MissingRate), bins=10, fill="grey") + 
+  geom_segment(aes(x=0.3, y=0, xend=0.3, yend=Inf)) +
+  geom_rect(aes(xmin=-Inf, xmax=0.3, ymin=0, ymax=Inf), fill="blue", alpha=0.05) +
+  geom_rect(aes(xmin=0.3, xmax=Inf, ymin=0, ymax=Inf), fill="red", alpha=0.05) +
+  xlab("Missingness by sample") + ylab("Frequency") +
+  ggtitle("Missingness by Sample") + theme_bw() + 
+  theme(plot.title=element_text(hjust=0.5, face="bold"))
+print(snp_samp_missing_plot)
+
+snp_var_missing_plot <- ggplot() +
+  geom_histogram(data=df_miss_variant, aes(x=MissingRate), bins=12, fill="grey") + 
+  geom_segment(aes(x=0.1, y=0, xend=0.1, yend=Inf)) +
+  geom_rect(aes(xmin=-Inf, xmax=0.1, ymin=0, ymax=Inf), fill="blue", alpha=0.05) +
+  geom_rect(aes(xmin=0.1, xmax=Inf, ymin=0, ymax=Inf), fill="red", alpha=0.05) +
+  xlab("Missingness by Variant") + ylab("Frequency") +
+  ggtitle("Missingness by Variant") + theme_bw() + 
+  theme(plot.title=element_text(hjust=0.5, face="bold"))
+print(snp_var_missing_plot)
+
+```
+
+## 2a. Filter the Dataset
+
+Now that you have observed the data, you can choose what cutoff is most appropriate for this dataset to ensure you are retaining high-quality genotypes for downstream analyses.
+
+```{r filter-missing}
+# Simple variant filter: remove SNPs with >20% missing
+vcf_filt_SEA <- SEA[miss_by_variant_SEA < 0.2, ]
+vcf_filt_AFR <- AFR[miss_by_variant_AFR < 0.2, ]
+
+vcf_filt_SEA
+vcf_filt_AFR
+
+```

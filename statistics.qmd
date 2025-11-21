@@ -1,0 +1,181 @@
+---
+title: "Statistics"
+editor: visual
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+## 6. Population Genetic Statistics
+
+::: callout-note
+### Exercises for Section 6. Population Genetic Statistics
+
+-   What information do we have?
+-   Generate statistics for both datasets - SEA and AFR
+:::
+
+```{r pop-stats}
+# Ensure order of metadata matches gl_SEA
+meta_ord_SEA <- meta[match(indNames(gl_SEA), meta$sample), ]
+stopifnot(all(meta_ord_SEA$sample == indNames(gl_SEA)))
+
+# Convert to genind then extract allele matrix
+gi_SEA <- gl2gi(gl_SEA)
+tab_SEA <- gi_SEA@tab   # individuals × SNPs
+
+```
+
+```{r basic-div}
+
+# Basic diversity stats per population
+pop_stats <- poppr(gi_SEA)
+pop_stats
+
+# Pairwise Fst (Nei) between populations
+fst_sea <- pairwise.neifst(gi_SEA)
+
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+fst_sea
+:::
+
+### **Why compute FST?**
+
+-   Measures genetic differentiation between populations.
+
+-   Higher FST = populations are more genetically distinct.
+
+-   Helps identify imported clusters vs. local diversity.
+
+### **Strengths**
+
+-   Standard metric used in population genetics.
+
+-   Easy to compare across studies.
+
+### **Weaknesses**
+
+-   Influenced by sample size.
+
+-   Can’t distinguish drift from selection.
+
+-   Doesn’t account for gene flow direction.
+
+## 7. Allele Frequencies
+
+This is an example of a plot that you could use. For this simulated dataset it doesn't really show variation but gives you an idea.
+
+-   What does this plot show?
+
+```{r allele-freqs}
+afreq <- seppop(gi_SEA) %>% lapply(tab, freq = TRUE, NA.method = "mean")
+
+# Example: Namibia
+freq_df <- as.data.frame(afreq$Namibia)
+freq_df_long <- reshape2::melt(freq_df)
+
+allele_sea <- ggplot(freq_df_long, aes(value)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  theme_minimal() +
+  labs(title = "Distribution of Allele Frequencies (Namibia)", x = "Allele Frequency", y = "Count")
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+allele_sea
+:::
+
+### **Why calculate allele frequencies?**
+
+-   To understand genetic composition of populations.
+
+-   Compare variation between regions.
+
+-   Detect signatures of selection, bottlenecks, or founder events.
+
+### **What do they tell us?**
+
+-   If a variant is common in one country but rare in another → local adaptation or drift.
+
+-   If many SNPs show similar frequencies between two countries → shared ancestry.
+
+### **Strengths**
+
+-   Easy to interpret.
+
+-   Work well for comparing populations.
+
+### **Weaknesses**
+
+-   Requires good sample sizes.
+
+-   Does not capture linkage or haplotype signals.
+
+## 8. Nucleotide Diversity
+
+```{r nucleotide-div}
+
+# Calculate π per site
+pi_per_site <- meta_ord_SEA %>%
+  group_split(site) %>%         # split metadata into list by site
+  map_df(function(df_site) {    # loop over each site
+    samples <- df_site$sample   # sample IDs in this site
+
+    # Select corresponding rows of allele matrix
+    mat <- tab_SEA[rownames(tab_SEA) %in% samples, , drop = FALSE]
+
+    tibble(
+      site = unique(df_site$site),
+      pi = calc_pi(mat)
+    )
+  })
+
+pi_per_site
+
+nuc_sea <- ggplot(pi_per_site, aes(x = reorder(site, pi), y = pi, fill = site)) +
+  geom_col() +
+  theme_minimal() +
+  scale_fill_viridis_d() +
+  labs(
+    title = "Nucleotide Diversity (π) per Site",
+    x = "Site",
+    y = "Nucleotide Diversity (π)"
+  )
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+nuc_sea
+:::
+
+### **Why calculate nucleotide diversity?**
+
+-   Measures genetic variation within a population.
+
+-   π reflects the average number of nucleotide differences per site between two genomes.
+
+-   In outbreak genomics:
+
+    -   Low π → **clonal**, single-source introduction
+
+    -   High π → **diverse**, long-standing transmission
+
+### **Strengths**
+
+-   Very intuitive measure of diversity
+
+-   Useful for comparing sites, years, countries.
+
+### **Weaknesses**
+
+-   Requires high-quality SNP data.
+
+-   Sensitive to missingness and uneven sample sizes.

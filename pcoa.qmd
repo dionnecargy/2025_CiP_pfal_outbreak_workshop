@@ -1,0 +1,99 @@
+---
+title: "PcoA"
+editor: visual
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+## 3. Convert to Genlight and Add Metadata
+
+Before we can explore population structure, we need to convert the file format so our packages can run the dataset.
+
+```{r genlight-conversion}
+gl_SEA <- vcfR2genlight(vcf_filt_SEA)
+
+# Make sure the order of samples in meta matches genlight individuals
+meta_ord <- meta[match(indNames(gl_SEA), meta$sample), ]
+stopifnot(all(meta_ord$sample == indNames(gl_SEA)))
+
+# Assign populations by country
+pop(gl_SEA) <- meta_ord$country
+
+gl_SEA
+```
+
+## 4. PCoA / MDS Plot (Population Structure)
+
+::: callout-note
+### Exercises for Section 4. PCoA / MDS Plot (Population Structure)
+
+-   What patterns do you observe in this section?
+-   Which samples or populations stand out?
+-   What does this tell you about the population structure?
+-   Why do we use PCoA plots?
+
+Other tasks: - Use ggplot2 (<https://ggplot2.tidyverse.org/)> to change colours or change the shapes of the countries. - What happens if you change the data to sites?
+
+Ensure you generate PCoA for both SEA and ARF datasets!
+:::
+
+### Principal Coordinates Analysis (PCoA)
+
+```{r pcoa}
+dist_mat_SEA <- dist(as.matrix(gl_SEA))
+pcoa_res <- cmdscale(dist_mat, k = 2)
+pcoa_df <- data.frame(pcoa_res, country = pop(gl_SEA))
+
+pcoa <- ggplot(pcoa_df, aes(X1, X2, color = country)) +
+  geom_point(size = 3) +
+  theme_minimal() +
+  scale_color_viridis_d() +
+  labs(title = "PCoA of 180-SNP Genotypes", x = "Coordinate 1", y = "Coordinate 2")
+
+
+```
+
+::: {.callout-tip collapse="true"}
+## Result
+
+pcoa
+:::
+
+### **What PCoA Does?**
+
+-   Converts genetic distances between samples into a visual 2-D or 3-D space.
+
+-   Places genetically similar samples closer together, and genetically different samples farther apart.
+
+-   Helps uncover population structure, clusters, admixture, and outliers.
+
+### **Why It’s Useful for This Workshop**
+
+-   Shows whether the Namibia samples form a tight cluster (suggesting an outbreak from a common source).
+
+-   Reveals where the outbreak is genetically similar to.
+
+-   Quickly distinguishes regional genetic signatures (SEA vs Southern Africa vs West Africa).
+
+### **Strengths**
+
+-   Very fast, works on large datasets.
+
+-   Makes complex multidimensional relationships easy to interpret.
+
+-   No model assumptions (unlike PCA which assumes linearity).
+
+-   Great for teaching and preliminary exploration.
+
+### **Weaknesses**
+
+-   The axes are often hard to interpret biologically.
+
+-   Sensitive to missing data and distance metric choice.
+
+-   Does not explicitly model ancestry or evolution.
+
+-   Clusters can appear clearer or blurrier depending on scaling
