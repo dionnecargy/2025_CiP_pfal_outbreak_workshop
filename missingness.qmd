@@ -5,8 +5,30 @@ output:
   html_document:
     toc: true
     toc_float: true
-    number_sections: true
+    number_sections: false
 ---
+
+```{r load-packages, include=FALSE}
+library(vcfR)
+library(adegenet)
+library(poppr)
+library(ape)
+library(pegas)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+library(ggtree)
+library(viridis)
+library(dartR.base)
+library(hierfstat)
+library(tidyr)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(scales)
+library(purrr)
+
+```
 
 ## 2. Filter the Dataset and Calculate Missingness
 
@@ -18,25 +40,50 @@ output:
 -   Are these mostly complete datasets or are we missing important information?
 :::
 
+::: {.callout-important collapse="true"}
 ### IMPORTANT
 
 You will need to run this section on both SEA and ARF datasets. You can duplicate the code chunk, or add additional lines in the chunk to define the other dataset.
 
 Note: if you use the same dataframe names, you will overwrite your dataframes.
+:::
 
-```{r summaries}
+```{r summaries, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+AFR <- read.vcfR("data/AFR_180snp_DR.vcf")
+SEA <- read.vcfR("data/SEA_180snp_DR.vcf")
+meta <- read.table("data/metadata_samples.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 
-summary(SEA)
 ```
 
-```{r extract-gt}
+::: {.callout-note collapse="true"}
+## Click to see output
 
+```{r}
+#| echo: false
+summary(SEA)
+```
+:::
+
+```{r extract-gt, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 gts_SEA <- extract.gt(SEA) # character matrix of genotypes (e.g., 0/0, 1/1, ./.)
 gts_AFR <- extract.gt(AFR) 
 
+# optional save
+saveRDS(gts_SEA, file = "derived/gts_SEA.rds")
+saveRDS(gts_AFR, file = "derived/gts_AFR.rds")
+
 ```
 
-```{r missingness_plots}
+::: {.callout-note collapse="true"}
+## Click to see output
+
+```{r}
+#| echo: false
+gts_SEA
+```
+:::
+
+```{r missingness_plots, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
 # Missingness: treat "./." as missing
 miss_by_sample_SEA <- apply(is.na(gts_SEA) | gts_SEA == "./.", 2, mean)
@@ -44,54 +91,111 @@ miss_by_variant_SEA <- apply(is.na(gts_SEA) | gts_SEA == "./.", 1, mean)
 miss_by_sample_AFR <- apply(is.na(gts_AFR) | gts_AFR == "./.", 2, mean)
 miss_by_variant_AFR <- apply(is.na(gts_AFR) | gts_AFR == "./.", 1, mean)
 
-
 #plots 
-df_miss_sample <- data.frame(Sample = names(miss_by_sample), MissingRate = miss_by_sample)
-ggplot(df_miss_sample, aes(x = reorder(Sample, MissingRate), y = MissingRate)) +
+df_miss_sample_SEA <- data.frame(Sample = names(miss_by_sample_SEA), MissingRate = miss_by_sample_SEA)
+plot_miss_sample_SEA <- ggplot(df_miss_sample_SEA, aes(x = reorder(Sample, MissingRate), y = MissingRate)) +
   geom_bar(stat = "identity", fill = "darkred") +
   coord_flip() + theme_minimal() +
   labs(title = "Missingness per Sample", y = "Proportion Missing", x = "Sample")
 
-df_miss_variant <- data.frame(SNP = 1:length(miss_by_variant), MissingRate = miss_by_variant)
-ggplot(df_miss_variant, aes(x = SNP, y = MissingRate)) +
+df_miss_variant_SEA <- data.frame(SNP = 1:length(miss_by_variant_SEA), MissingRate = miss_by_variant_SEA)
+plot_miss_variant_SEA <- ggplot(df_miss_variant_SEA, aes(x = SNP, y = MissingRate)) +
   geom_point(color = "steelblue") +
   theme_minimal() +
   labs(title = "Missingness per SNP", y = "Proportion Missing", x = "SNP Index")
 
+#optional save
+saveRDS(miss_by_sample_SEA, file = "derived/df_miss_sample_SEA")
+saveRDS(miss_by_variant_SEA, file = "derived/df_miss_variant_SEA")
+saveRDS(miss_by_sample_AFR, file = "derived/df_miss_sample_AFR")
+saveRDS(miss_by_variant_AFR, file = "derived/df_miss_variant_AFR")
 
 # alternative plots
 snp_samp_missing_plot <- ggplot() +
-  geom_histogram(data=df_miss_sample, aes(x=MissingRate), bins=10, fill="grey") + 
+  geom_histogram(data=df_miss_sample_SEA, aes(x=MissingRate), bins=10, fill="grey") + 
   geom_segment(aes(x=0.3, y=0, xend=0.3, yend=Inf)) +
   geom_rect(aes(xmin=-Inf, xmax=0.3, ymin=0, ymax=Inf), fill="blue", alpha=0.05) +
   geom_rect(aes(xmin=0.3, xmax=Inf, ymin=0, ymax=Inf), fill="red", alpha=0.05) +
   xlab("Missingness by sample") + ylab("Frequency") +
   ggtitle("Missingness by Sample") + theme_bw() + 
   theme(plot.title=element_text(hjust=0.5, face="bold"))
-print(snp_samp_missing_plot)
 
 snp_var_missing_plot <- ggplot() +
-  geom_histogram(data=df_miss_variant, aes(x=MissingRate), bins=12, fill="grey") + 
+  geom_histogram(data=df_miss_variant_SEA, aes(x=MissingRate), bins=12, fill="grey") + 
   geom_segment(aes(x=0.1, y=0, xend=0.1, yend=Inf)) +
   geom_rect(aes(xmin=-Inf, xmax=0.1, ymin=0, ymax=Inf), fill="blue", alpha=0.05) +
   geom_rect(aes(xmin=0.1, xmax=Inf, ymin=0, ymax=Inf), fill="red", alpha=0.05) +
   xlab("Missingness by Variant") + ylab("Frequency") +
   ggtitle("Missingness by Variant") + theme_bw() + 
   theme(plot.title=element_text(hjust=0.5, face="bold"))
-print(snp_var_missing_plot)
+
 
 ```
+
+::: {.callout-note collapse="true"}
+## Click to see plot
+
+```{r}
+#| echo: false
+plot(plot_miss_sample_SEA)
+```
+:::
+
+::: {.callout-note collapse="true"}
+## Click to see plot
+
+```{r}
+#| echo: false
+plot(plot_miss_variant_SEA)
+```
+:::
+
+::: {.callout-note collapse="true"}
+## Click to see plot
+
+```{r}
+#| echo: false
+print(snp_samp_missing_plot)
+```
+:::
+
+::: {.callout-note collapse="true"}
+## Click to see plot
+
+```{r}
+#| echo: false
+print(snp_var_missing_plot)
+```
+:::
 
 ## 2a. Filter the Dataset
 
 Now that you have observed the data, you can choose what cutoff is most appropriate for this dataset to ensure you are retaining high-quality genotypes for downstream analyses.
 
-```{r filter-missing}
+```{r filter-missing, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 # Simple variant filter: remove SNPs with >20% missing
 vcf_filt_SEA <- SEA[miss_by_variant_SEA < 0.2, ]
 vcf_filt_AFR <- AFR[miss_by_variant_AFR < 0.2, ]
 
-vcf_filt_SEA
-vcf_filt_AFR
-
+# optional save
+saveRDS(vcf_filt_SEA, file = "derived/vcf_filt_SEA.rds")
+saveRDS(vcf_filt_AFR, file = "derived/vcf_filt_AFR.rds")
 ```
+
+::: {.callout-note collapse="true"}
+## Click to see output
+
+```{r}
+#| echo: false
+vcf_filt_SEA
+```
+:::
+
+::: {.callout-note collapse="true"}
+## Click to see output
+
+```{r}
+#| echo: false
+vcf_filt_AFR
+```
+:::

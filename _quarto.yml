@@ -2,9 +2,14 @@ project:
   type: website
   output-dir: _site
 
+execute:
+  freeze: auto
+  setup: setup.qmd
+  
 website:
-  title: "P. falciparum Outbreak Workshop"
+  title: "*P. falciparum* Outbreak Workshop"
   navbar:
+    background: "#15573A"
     left:
       - text: "Workshop"
         href: index.qmd
@@ -21,9 +26,15 @@ website:
 
 format:
   html:
-    theme: cosmo
+    theme:
+      - theme.scss
+    css: 
+      - styles.css
     toc: true
     toc-depth: 2
     code-fold: true
     code-tools: true
-    number-sections: true
+    number-sections: false
+    fontawesome: true
+
+editor: visual

@@ -5,8 +5,35 @@ output:
   html_document:
     toc: true
     toc_float: true
-    number_sections: true
+    number_sections: false
 ---
+
+```{r load-packages, include=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(vcfR)
+library(adegenet)
+library(poppr)
+library(ape)
+library(pegas)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+library(ggtree)
+library(viridis)
+library(dartR.base)
+library(hierfstat)
+library(tidyr)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(scales)
+library(purrr)
+
+meta <- read.table("data/metadata_samples.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+vcf_filt_SEA <- readRDS("derived/vcf_filt_SEA.rds")
+vcf_filt_AFR <- readRDS("derived/vcf_filt_AFR.rds")
+
+
+```
 
 ## Activity: Merge the datasets together and plot the PCoA and phylogenetic trees
 
@@ -15,7 +42,7 @@ output:
 -   Do you have an idea on where the parasites have come from?
 :::
 
-```{r merge_dataframes}
+```{r merge_dataframes, message=FALSE, warning=FALSE, paged.print=FALSE}
 
 stopifnot(all(vcf_filt_SEA@fix[, "ID"] == vcf_filt_AFR@fix[, "ID"]))
 
@@ -27,7 +54,7 @@ vcf_filt_merged@gt <- cbind(
 
 ```
 
-```{r genlight-conversion_merged}
+```{r genlight-conversion_merged, message=FALSE, warning=FALSE, paged.print=FALSE}
 gl_all <- vcfR2genlight(vcf_filt_merged)
 
 # Make sure the order of samples in meta matches genlight individuals
@@ -37,11 +64,23 @@ stopifnot(all(meta_ord$sample == indNames(gl_all)))
 # Assign populations by country
 pop(gl_all) <- meta_ord$country
 
-gl_all
+saveRDS(gl_all, file = "derived/gl_all.rds")
 ```
 
-```{r pcoa_merged}
+::: {.callout-note collapse="true"}
+## Click to see output
+
+```{r}
+#| echo: false
+gl_all
+```
+:::
+
+```{r pcoa_merged, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 dist_mat_all <- dist(as.matrix(gl_all))
+#optional save
+saveRDS(dist_mat_all, file = "derived/dist_mat_all.rds")
+
 pcoa_res <- cmdscale(dist_mat_all, k = 2)
 pcoa_df <- data.frame(pcoa_res, country = pop(gl_all))
 
@@ -52,28 +91,33 @@ pcoa_all <- ggplot(pcoa_df, aes(X1, X2, color = country)) +
   labs(title = "PCoA of 180-SNP Genotypes", x = "Coordinate 1", y = "Coordinate 2")
 ```
 
-::: {.callout-tip collapse="true"}
-## Result
+::: {.callout-note collapse="true"}
+## Click to see plot
 
+```{r}
+#| echo: false
 pcoa_all
+```
 :::
 
-```{r nj-tree}
-tree <- nj(dist_mat_all)
+```{r nj-tree_all, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+tree_all <- nj(dist_mat_all)
 
-tree_all <- ggtree(tree, layout = "fan") %<+% meta_ord +
+tree_all <- ggtree(tree_all, layout = "fan") %<+% meta_ord +
   geom_tippoint(aes(color = country), size = 2) +
   scale_color_viridis_d() +
   theme_tree2() +
-  labs(title = "Neighbor-Joining Tree of *P. falciparum* Samples")
+  labs(title = "Neighbor-Joining Tree of P. falciparum Samples")
 
-tree_plot
 ```
 
-::: {.callout-tip collapse="true"}
-## Result
+::: {.callout-note collapse="true"}
+## Click to see plot
 
+```{r}
+#| echo: false
 tree_all
+```
 :::
 
 # Break: We will wait until everyone has completed this activity.

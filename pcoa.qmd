@@ -5,24 +5,55 @@ output:
   html_document:
     toc: true
     toc_float: true
-    number_sections: true
+    number_sections: false
 ---
+
+```{r load-packages, include=FALSE}
+library(vcfR)
+library(adegenet)
+library(poppr)
+library(ape)
+library(pegas)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+library(ggtree)
+library(viridis)
+library(dartR.base)
+library(hierfstat)
+library(tidyr)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(scales)
+library(purrr)
+
+```
 
 ## 3. Convert to Genlight and Add Metadata
 
 Before we can explore population structure, we need to convert the file format so our packages can run the dataset.
 
-```{r genlight-conversion}
+```{r genlight-conversion, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+meta <- read.table("data/metadata_samples.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+vcf_filt_SEA <- readRDS("derived/vcf_filt_SEA.rds")
+
 gl_SEA <- vcfR2genlight(vcf_filt_SEA)
 
 # Make sure the order of samples in meta matches genlight individuals
 meta_ord <- meta[match(indNames(gl_SEA), meta$sample), ]
+saveRDS(meta_ord, file = "derived/meta_ord.rds")
+
 stopifnot(all(meta_ord$sample == indNames(gl_SEA)))
 
 # Assign populations by country
 pop(gl_SEA) <- meta_ord$country
 
 gl_SEA
+
+# optional save
+saveRDS(gl_SEA, file = "derived/gl_SEA.rds")
+
 ```
 
 ## 4. PCoA / MDS Plot (Population Structure)
@@ -42,9 +73,12 @@ Ensure you generate PCoA for both SEA and ARF datasets!
 
 ### Principal Coordinates Analysis (PCoA)
 
-```{r pcoa}
+```{r pcoa, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 dist_mat_SEA <- dist(as.matrix(gl_SEA))
-pcoa_res <- cmdscale(dist_mat, k = 2)
+#optional save
+saveRDS(dist_mat_SEA, file = "derived/dist_mat_SEA.rds")
+
+pcoa_res <- cmdscale(dist_mat_SEA, k = 2)
 pcoa_df <- data.frame(pcoa_res, country = pop(gl_SEA))
 
 pcoa <- ggplot(pcoa_df, aes(X1, X2, color = country)) +
@@ -53,14 +87,17 @@ pcoa <- ggplot(pcoa_df, aes(X1, X2, color = country)) +
   scale_color_viridis_d() +
   labs(title = "PCoA of 180-SNP Genotypes", x = "Coordinate 1", y = "Coordinate 2")
 
-
 ```
 
-::: {.callout-tip collapse="true"}
-## Result
+::: {.callout-note collapse="true"}
+## Click to see plot
 
+```{r}
+#| echo: false
 pcoa
+```
 :::
+
 
 ### **What PCoA Does?**
 

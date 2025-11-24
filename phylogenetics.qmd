@@ -5,11 +5,38 @@ output:
   html_document:
     toc: true
     toc_float: true
-    number_sections: true
+    number_sections: false
 ---
+
+```{r load-packages, include=FALSE}
+library(vcfR)
+library(adegenet)
+library(poppr)
+library(ape)
+library(pegas)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+library(ggtree)
+library(viridis)
+library(dartR.base)
+library(hierfstat)
+library(tidyr)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(scales)
+library(purrr)
+
+meta <- read.table("data/metadata_samples.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+meta_ord <- readRDS("derived/meta_ord.rds")
+dist_mat_SEA <- readRDS("derived/dist_mat_SEA.rds")
+
+```
 
 ## 5. Phylogenetic Tree (Neighbor-Joining)
 
+::: callout-note
 ### Exercises for Section 5. Phylogenetic Tree (Neighbor-Joining)
 
 -   What patterns do you observe in this section?
@@ -20,10 +47,11 @@ output:
 Other tasks: - Use ggplot2 (<https://ggplot2.tidyverse.org/)> to change colours or change the shapes of the countries. - What happens if you change the data to sites?
 
 Ensure you generate trees for both SEA and ARF datasets!
+:::
 
 ### Phylogenetic Tree (Neighbor-Joining)
 
-```{r nj-tree}
+```{r nj_tree_SEA, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 tree <- nj(dist_mat_SEA)
 
 tree_plot_SEA <- ggtree(tree, layout = "fan") %<+% meta_ord +
@@ -32,13 +60,16 @@ tree_plot_SEA <- ggtree(tree, layout = "fan") %<+% meta_ord +
   theme_tree2() +
   labs(title = "Neighbor-Joining Tree of P. falciparum Samples")
 
-
 ```
 
-::: {.callout-tip collapse="true"}
-## Result
 
+::: {.callout-note collapse="true"}
+## Click to see plot
+
+```{r}
+#| echo: false
 tree_plot_SEA
+```
 :::
 
 ### **Tree Purpose**
@@ -106,7 +137,7 @@ tree_plot_SEA
 ## Solution
 
 | Purpose | Best Method | Why |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | Explore broad population structure | PCoA | Fast, intuitive, clustering-focused |
 | Identify outbreak clusters | PCoA and Trees | PCoA visualises clusters, tree shows lineage |
 | Examine evolutionary relationships | Tree | Reflects ancestral history |

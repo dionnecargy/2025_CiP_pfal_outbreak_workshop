@@ -5,7 +5,7 @@ output:
   html_document:
     toc: true
     toc_float: true
-    number_sections: true
+    number_sections: false
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +18,7 @@ To install the following packages on your computer you will need to use: install
 
 Note: The \#'s throughout the file are comments, if you remove the \# from the line in the code chunk you can run that line.
 
-```{r load-packages}
+```{r load-packages, message=FALSE, warning=FALSE, paged.print=FALSE}
 #(!require("BiocManager", quietly = TRUE))
 #    install.packages("BiocManager")
 #BiocManager::install()
@@ -41,19 +41,35 @@ library(sf)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(scales)
-
+library(purrr)
 
 ```
 
 ```{r load_files}
 
 # Extended metadata with sites, coordinates, and DR mutations
-meta <- read.table("metadata_samples_extended.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+meta <- read.table("data/metadata_samples.txt", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 
 # load the African data and the Southeast Asia data. You will need both of these to find where the imported cases are.
-AFR <- read.vcfR("AFR_180snp_DR.vcf")
-SEA <- read.vcfR("SEA_180snp_DR.vcf")
+AFR <- read.vcfR("data/AFR_180snp_DR.vcf")
+SEA <- read.vcfR("data/SEA_180snp_DR.vcf")
 
-AFR
+```
+
+::: {.callout-note collapse="true"}
+## Click to see SEA dataset
+
+```{r}
+#| echo: false
 SEA
 ```
+:::
+
+::: {.callout-note collapse="true"}
+## Click to see AFR dataset
+
+```{r}
+#| echo: false
+AFR
+```
+:::

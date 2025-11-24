@@ -1,0 +1,39 @@
+/*-- scss:defaults --*/
+// Base document colours
+$body-bg: white;
+$body-color: #000000; 
+$link-color: #38A5E0; 
+$navbar-bg: #15573A;
+
+// Code blocks
+$code-block-bg-alpha: -.8;
+
+/* Change link color */
+a {
+  color: #38A5E0; /* Replace with your desired color */
+  text-decoration: none; /* Optional: Remove underline */
+  font-weight: bold; /* Make text bold */
+}
+
+/* Change link color on hover */
+a:hover {
+  color: #90CFF0; /* Replace with your desired hover color */
+  text-decoration: underline; /* Optional: Add underline on hover */
+  font-weight: bold; /* Make text bold */
+}
+
+h1 {
+  color: #15573A;
+}
+
+h2 {
+  color: #15573A;
+}
+
+h3 {
+  color: #15573A;
+}
+
+h4 {
+  color: #15573A;
+}

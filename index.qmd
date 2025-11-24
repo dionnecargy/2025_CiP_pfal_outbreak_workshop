@@ -5,7 +5,7 @@ output:
   html_document:
     toc: true
     toc_float: true
-    number_sections: true
+    number_sections: false
 ---
 
 ::: callout-important
@@ -28,8 +28,10 @@ Although local transmission in Namibia had been largely interrupted, bordering c
 
 To investigate, all cases were genotyped using a global 180-SNP barcode, providing a compact yet highly informative set of markers for population structure, relatedness, and transmission inference.
 
-::: callout-important
+:::: callout-important
+::: {style="green"}
 ## Question
+:::
 
 #### Can you you identify where in the world the outbreak has originated?
-:::
+::::
