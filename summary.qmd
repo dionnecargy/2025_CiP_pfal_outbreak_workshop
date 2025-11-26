@@ -10,6 +10,7 @@ output:
 
 # Key Take-Home Messages
 
+::: {.callout-note appearance="simple"}
 The workshop will walk you through how we identify these patterns using:
 
 -   population structure methods (PCoA / DAPC)
@@ -23,17 +24,21 @@ The workshop will walk you through how we identify these patterns using:
 -   connectedness maps
 
 -   genetic diversity & differentiation (π, Fst)
+:::
 
 ### **Distinct population structure**
 
+::: {.callout-note appearance="simple"}
 There is a clear separation between Southeast Asian and African parasite populations.
 
 -   SEA clusters tightly and distinctly from the rest.
 
 -   African populations show broader diversity and weaker structure overall.
+:::
 
 ### **Drug-resistant lineage detection**
 
+::: {.callout-note appearance="simple"}
 The outbreak lineage is characterised by:
 
 -   C580Y kelch13 mutation,
@@ -41,9 +46,11 @@ The outbreak lineage is characterised by:
 -   A full background of crt, mdr1, dhfr, and dhps mutations typically associated with artemisinin and partner-drug resistance.
 
 These mutations were exclusive to the Cambodian founders and the Namibia outbreak samples, confirming a single imported resistant lineage rather than local evolution.
+:::
 
 ### **Geographic patterns**
 
+::: {.callout-note appearance="simple"}
 Mapping revealed:
 
 -   Strong spatial clustering of outbreak-associated samples within Namibia.
@@ -51,9 +58,11 @@ Mapping revealed:
 -   Overlap and admixture among other African sites, consistent with regional gene flow.
 
 -   Complete absence of SEA-type DR mutations outside the outbreak cluster.
+:::
 
 ### **Connectedness between populations**
 
+::: {.callout-note appearance="simple"}
 Connectedness maps showed:
 
 -   High genetic similarity links between Cambodian founder sites and Namibian outbreak sites.
@@ -61,22 +70,29 @@ Connectedness maps showed:
 -   Regional linkage clusters within Africa (e.g., Angola ↔ Botswana).
 
 -   Weak or no genetic connectivity between distant African countries and between Africa and SEA, except for the imported lineage.
+:::
 
 ### **Genetic diversity and differentiation**
 
+::: {.callout-note appearance="simple"}
 -   Nucleotide diversity (π) differed by site, reflecting varying transmission intensity and genetic mixing.
 
 -   Pairwise Fst supported strong differentiation between regions and between outbreak and non-outbreak samples.
+:::
 
 # Workshop Results
 
 As we completed the genomic analysis, a striking pattern emerged:
 
+::: {.callout-note appearance="simple"}
 ### **Namibian outbreak parasites clustered tightly with a subset of Cambodian isolates.**
+:::
 
 At first glance, this raised a fundamental question:
 
-**Is the outbreak Cambodia imported to Africa OR is it Africa imported into Cambodia?**
+::: {.callout-note appearance="simple"}
+### **Is the outbreak Cambodia imported to Africa OR is it Africa imported into Cambodia?**
+:::
 
 This is a common source of confusion when interpreting “imported case” narratives.
 
@@ -102,6 +118,7 @@ This complex genetic signature cannot be inferred from epidemiology alone.
 
 ### **Conclusion of the mystery**
 
+::: {.callout-note appearance="simple"}
 The Namibia cluster was seeded by a recent importation of a Cambodian resistant lineage, itself derived historically from African ancestry but now evolving in Southeast Asia.
 
 This demonstrates exactly why genomic surveillance is critical:
@@ -109,3 +126,4 @@ This demonstrates exactly why genomic surveillance is critical:
 -   Epidemiology tells us that importation occurred.
 
 -   Genomics tells us where from and which direction the parasites moved.
+:::
